@@ -17,6 +17,7 @@ import os
 from keras.preprocessing.image import img_to_array
 from imutils import paths
 import numpy as np
+import matplotlib.pyplot as plt
 
 class LeNet:
     @staticmethod
@@ -98,22 +99,82 @@ def pre_process(width, height, path):
     #preprocess images to width x height pixels as required for LeNet
     for image_path in image_paths:
         image = cv2.imread(image_path)
-        image = cv2.resize(image, (width, height))
-        image = img_to_array(image)
-        data.append(image)
+        if image is not None:
+            image = cv2.resize(image, (width, height))
+            image = img_to_array(image)
+            data.append(image)
     
-        #Extract class labels
-        label = image_path.split(os.path.sep)[-2]
-        if label == 'poison_ivy':
-            label = 0
-        elif label == 'poison_oak':
-            label = 1
-        else:
-            label = 2
-        labels.append(label)
+            #Extract class labels
+            label = image_path.split(os.path.sep)[-2]
+            if label == 'poison_ivy':
+                label = 0
+            elif label == 'poison_oak':
+                label = 1
+            else:
+                label = 2
+            labels.append(label)
        
     #Scal pixel intensities from 0 to 1
     data = np.array(data, dtype='float') / 255.0
     labels = np.array(labels)
     
     return data, labels
+
+def bi_pre_process(width, height, path, label_name):
+    """
+    Resize and rescale images stored in image folder.
+    
+    Return pre-processed data and labels for the classes based
+    on sub-directories in the image folder
+    """
+    #containers for pre-processed image data and class labels
+    data = []
+    labels = []
+
+    #images directory contains 3 sub-directories: 'poison_ivy', 'poison_oak', 'poison_sumac'
+    #randomly get image paths and shuffle them
+    # current path 'C:\\Users\\jltsa\\Desktop\\Project_2\\images'
+    image_paths = sorted(list(paths.list_images(path)))
+    random.seed(42)
+    random.shuffle(image_paths)
+
+    #preprocess images to width x height pixels as required for LeNet
+    for image_path in image_paths:
+        image = cv2.imread(image_path)
+        if image is not None:
+            image = cv2.resize(image, (width, height))
+            image = img_to_array(image)
+            data.append(image)
+    
+            #Extract class labels
+            label = image_path.split(os.path.sep)[-2]
+            if label == label_name:
+                label = 0
+            else:
+                label = 1
+            labels.append(label)
+       
+    #Scal pixel intensities from 0 to 1
+    data = np.array(data, dtype='float') / 255.0
+    labels = np.array(labels)
+    
+    return data, labels
+
+def plot_acc_loss(epochs, model, title=None, save=False, path=None, save_as=None):
+    """
+    plot the accuracy and loss of the train and test data
+    save plot optional
+    """
+    plt.style.use('ggplot')
+    plt.figure()
+    plt.plot(np.arange(0,epochs), model.history['loss'], label='Train_loss')
+    plt.plot(np.arange(0,epochs), model.history['val_loss'], label='Val_loss')
+    plt.plot(np.arange(0,epochs), model.history['acc'], label='Train_acc')
+    plt.plot(np.arange(0,epochs), model.history['val_acc'], label='Val_acc')
+    plt.title('Training Loss and Accuracy' + ' ' + str(title))
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss/Acc')
+    plt.legend(loc='upper left')
+    
+    if save == True:
+        plt.savefig(str(path)+'\\' + str(save_as) + '.png')
