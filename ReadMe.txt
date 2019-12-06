@@ -1,5 +1,3 @@
-Capstone Project 2
-
 Image classification of poisonous plants using Convolutional Neural Network.
 
 The goal will be for the network to be able to identify poison ivy, poison sumac, and poison oak.
